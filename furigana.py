@@ -31,6 +31,28 @@ def make_furigana(original, kana):
 
 
 def main():
+	# Load text
+	with open('text.txt') as f:
+		text = f.read()
+
+	sections = text.split('\n', 2)
+	title = sections[0]
+	author = sections[1]
+	text = sections[2]
+
+	# Load template
+	with open('templates/tate-a6-title.tex') as f:
+		template = f.read()
+
+	# Put text in template
+	template = template.replace('\\title{}', '\\title{{{}}}'.format(title))
+	template = template.replace('\\author{}', '\\author{{{}}}'.format(author))
+	template = template.replace('\\end{document}', '{}\n\\end{{document}}'.format(text))
+
+	print(template)
+
+	return;
+
 	kks = pykakasi.kakasi()
 	text = '吾輩は猫である。名前はまだ無い。'
 #	text = 'キツツキ計画'
