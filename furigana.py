@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import argparse
 from difflib import SequenceMatcher
 import unicodedata
 
@@ -74,15 +75,30 @@ def save_with_template(out_path, template_path, title, author, content):
 		f.write(template)
 
 
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument(
+		'template', type=str, help='Path of LaTeX document template'
+	)
+	parser.add_argument(
+		'input', type=str, help='Path of document text file'
+	)
+	parser.add_argument(
+		'-o', '--output', type=str, default='./out.tex',
+		help='Path of output file for LaTeX document'
+	)
+
+	return parser.parse_args()
+
+
 def main():
-	title, author, text = load_text('text.txt')
+	args = parse_args()
+
+	title, author, text = load_text(args.input)
 
 	furigana_text = add_latex_furigana(text)
 
-	save_with_template(
-		'./out.tex', 'templates/tate-a6-title.tex',
-		title, author, furigana_text
-	)
+	save_with_template(args.output, args.template, title, author, furigana_text)
 
 
 if __name__ == '__main__':
