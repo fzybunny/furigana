@@ -6,28 +6,33 @@ import unicodedata
 import pykakasi
 
 
-def make_furigana(original, kana):
+def make_furigana_latex(original, kana):
 	matches = SequenceMatcher(None, original, kana).get_matching_blocks()
 
 	original_idx = 0
 	kana_idx = 0
+
+	latex = []
 
 	for match in matches:
 		kanji = original[original_idx:match.a]
 		furigana = kana[kana_idx:match.b]
 		okurigana = original[match.a:match.a + match.size]
 
-		is_katakana = all('KATAKANA' in unicodedata.name(k) for k in kanji)
+		is_kanji = all('CJK' in unicodedata.name(k) for k in kanji)
 
 		if kanji:
-			print('{}'.format(kanji), end='')
-			if not is_katakana:
-				print('({})'.format(furigana), end='')
+			if is_kanji:
+				latex.append('\\ruby{{{}}}{{{}}}'.format(kanji, furigana))
+			else:
+				latex.append(kanji)
 		if okurigana:
-			print('{}'.format(okurigana), end='')
+			latex.append(okurigana)
 
 		original_idx = match.a + match.size
 		kana_idx = match.b + match.size
+
+	return ''.join(latex)
 
 
 def main():
@@ -40,6 +45,19 @@ def main():
 	author = sections[1]
 	text = sections[2]
 
+	# Add furigana
+	kks_result = iter(pykakasi.kakasi().convert(text))
+	furigana_words = []
+	for word in kks_result:
+		# There's a bug in kakasi where control characters
+		# cause it to duplicate the previous output.
+		if unicodedata.category(word['orig'][0])[0] == 'C':
+			furigana_words.append(word['orig'])
+			next(kks_result)
+		else:
+			furigana_words.append(make_furigana_latex(word['orig'], word['hira']))
+	furigana_text = ''.join(furigana_words)
+
 	# Load template
 	with open('templates/tate-a6-title.tex') as f:
 		template = f.read()
@@ -47,20 +65,9 @@ def main():
 	# Put text in template
 	template = template.replace('\\title{}', '\\title{{{}}}'.format(title))
 	template = template.replace('\\author{}', '\\author{{{}}}'.format(author))
-	template = template.replace('\\end{document}', '{}\n\\end{{document}}'.format(text))
+	template = template.replace('\\end{document}', '{}\n\\end{{document}}'.format(furigana_text))
 
 	print(template)
-
-	return;
-
-	kks = pykakasi.kakasi()
-	text = '吾輩は猫である。名前はまだ無い。'
-#	text = 'キツツキ計画'
-	result = kks.convert(text)
-	for word in result:
-		make_furigana(word['orig'], word['hira'])
-
-	print()
 
 
 if __name__ == '__main__':
