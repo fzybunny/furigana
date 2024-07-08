@@ -63,9 +63,9 @@ def main():
 		template = f.read()
 
 	# Put text in template
-	template = template.replace('\\title{}', '\\title{{{}}}'.format(title))
-	template = template.replace('\\author{}', '\\author{{{}}}'.format(author))
-	template = template.replace('\\end{document}', '{}\n\\end{{document}}'.format(furigana_text))
+	template = template.replace('<<TITLE>>', title)
+	template = template.replace('<<AUTHOR>>', author)
+	template = template.replace('<<CONTENT>>', furigana_text)
 
 	print(template)
 
