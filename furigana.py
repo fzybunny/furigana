@@ -27,8 +27,7 @@ def add_latex_furigana_word(original, kana):
 
 		if kanji:
 			if is_kanji:
-				# TODO: Properly split readings between characters?
-				latex.append('\\ruby[g]{{{}}}{{{}}}'.format(kanji, furigana))
+				latex.append('\\ruby{{{}}}{{{}}}'.format(kanji, furigana))
 			else:
 				latex.append(kanji)
 		if okurigana:
