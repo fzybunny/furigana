@@ -2,6 +2,7 @@
 
 import argparse
 from difflib import SequenceMatcher
+import subprocess
 import unicodedata
 
 import pykakasi
@@ -84,8 +85,8 @@ def parse_args():
 		'input', type=str, help='Path of document text file'
 	)
 	parser.add_argument(
-		'-o', '--output', type=str, default='./out.tex',
-		help='Path of output file for LaTeX document'
+		'-o', '--output', type=str, default='./out',
+		help='Name of output LaTeX files (without extention)'
 	)
 
 	return parser.parse_args()
@@ -98,7 +99,15 @@ def main():
 
 	furigana_text = add_latex_furigana(text)
 
-	save_with_template(args.output, args.template, title, author, furigana_text)
+	# No furigana
+	no_furigana_fname = '{}.tex'.format(args.output)
+	save_with_template(no_furigana_fname, args.template, title, author, text)
+	# With furigana
+	furigana_fname = '{}-furigana.tex'.format(args.output)
+	save_with_template(furigana_fname, args.template, title, author, furigana_text)
+
+	subprocess.run(['lualatex', no_furigana_fname])
+	subprocess.run(['lualatex', furigana_fname])
 
 
 if __name__ == '__main__':
