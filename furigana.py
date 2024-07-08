@@ -6,7 +6,9 @@ import unicodedata
 import pykakasi
 
 
-def make_furigana_latex(original, kana):
+def add_latex_furigana_word(original, kana):
+	'''Generate LaTeX to show furigana on a word, given its reading.
+	'''
 	matches = SequenceMatcher(None, original, kana).get_matching_blocks()
 
 	original_idx = 0
@@ -36,19 +38,12 @@ def make_furigana_latex(original, kana):
 	return ''.join(latex)
 
 
-def main():
-	# Load text
-	with open('text.txt') as f:
-		text = f.read()
-
-	sections = text.split('\n', 2)
-	title = sections[0]
-	author = sections[1]
-	text = sections[2]
-
-	# Add furigana
+def add_latex_furigana(text):
+	'''Add furigana to every kanji in a string.
+	'''
 	kks_result = iter(pykakasi.kakasi().convert(text))
 	furigana_words = []
+
 	for word in kks_result:
 		# There's a bug in kakasi where control characters
 		# cause it to duplicate the previous output.
@@ -56,19 +51,38 @@ def main():
 			furigana_words.append(word['orig'])
 			next(kks_result)
 		else:
-			furigana_words.append(make_furigana_latex(word['orig'], word['hira']))
-	furigana_text = ''.join(furigana_words)
+			furigana_words.append(add_latex_furigana_word(word['orig'], word['hira']))
 
-	# Load template
-	with open('templates/tate-a6-title.tex') as f:
+	return ''.join(furigana_words)
+
+
+def load_text(path):
+	with open(path) as f:
+		text = f.read()
+	return tuple(text.split('\n', 2)) # (title, author, text)
+
+
+def save_with_template(out_path, template_path, title, author, content):
+	with open(template_path) as f:
 		template = f.read()
 
-	# Put text in template
 	template = template.replace('<<TITLE>>', title)
 	template = template.replace('<<AUTHOR>>', author)
-	template = template.replace('<<CONTENT>>', furigana_text)
+	template = template.replace('<<CONTENT>>', content)
 
-	print(template)
+	with open(out_path, 'w') as f:
+		f.write(template)
+
+
+def main():
+	title, author, text = load_text('text.txt')
+
+	furigana_text = add_latex_furigana(text)
+
+	save_with_template(
+		'./out.tex', 'templates/tate-a6-title.tex',
+		title, author, furigana_text
+	)
 
 
 if __name__ == '__main__':
