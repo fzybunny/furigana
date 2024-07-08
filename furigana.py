@@ -58,6 +58,14 @@ def add_latex_furigana(text):
 	return ''.join(furigana_words)
 
 
+def fix_quotes_indent(text):
+	'''Make sure that quotes that are in their own paragraph aren't indented
+	'''
+
+	text = text.replace('\n\n「', '\n\n{\\hackyquoteindent\n「')
+	return text.replace('」\n\n', '」\n}\n\n')
+
+
 def load_text(path):
 	with open(path) as f:
 		text = f.read()
@@ -98,6 +106,9 @@ def main():
 	title, author, text = load_text(args.input)
 
 	furigana_text = add_latex_furigana(text)
+
+	furigana_text = fix_quotes_indent(furigana_text)
+	text = fix_quotes_indent(text)
 
 	# No furigana
 	no_furigana_fname = '{}.tex'.format(args.output)
