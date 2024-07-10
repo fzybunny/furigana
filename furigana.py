@@ -2,6 +2,7 @@
 
 import argparse
 from difflib import SequenceMatcher
+import os
 import subprocess
 import unicodedata
 
@@ -91,10 +92,6 @@ def parse_args():
 	parser.add_argument(
 		'input', type=str, help='Path of document text file'
 	)
-	parser.add_argument(
-		'-o', '--output', type=str, default='./out',
-		help='Name of output LaTeX files (without extention)'
-	)
 
 	return parser.parse_args()
 
@@ -110,10 +107,10 @@ def main():
 	text = fix_quotes_indent(text)
 
 	# No furigana
-	no_furigana_fname = '{}.tex'.format(args.output)
+	no_furigana_fname = os.path.splitext(args.input)[0] + '.tex'
 	save_with_template(no_furigana_fname, args.template, title, author, text)
 	# With furigana
-	furigana_fname = '{}-furigana.tex'.format(args.output)
+	furigana_fname = os.path.splitext(args.input)[0] + '-furigana.tex'
 	save_with_template(furigana_fname, args.template, title, author, furigana_text)
 
 	subprocess.run(['lualatex', no_furigana_fname])
