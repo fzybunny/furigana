@@ -43,19 +43,18 @@ def add_latex_furigana_word(original, kana):
 def add_latex_furigana(text):
 	'''Add furigana to every kanji in a string.
 	'''
-	kks_result = iter(pykakasi.kakasi().convert(text))
-	furigana_words = []
+	kks = pykakasi.kakasi()
 
-	for word in kks_result:
-		# There's a bug in kakasi where control characters
-		# cause it to duplicate the previous output.
-		if unicodedata.category(word['orig'][0])[0] == 'C':
-			furigana_words.append(word['orig'])
-			next(kks_result)
-		else:
-			furigana_words.append(add_latex_furigana_word(word['orig'], word['hira']))
-
-	return ''.join(furigana_words)
+	# kakasi has a bug with control characters, so we separate the input text into
+	# paragraphs without newlines and process them individually
+	paragraph_delim = '\n\n'
+	return paragraph_delim.join(
+		''.join(
+			add_latex_furigana_word(word['orig'], word['hira'])
+			for word in kks.convert(paragraph.replace('\n', ''))
+		)
+		for paragraph in text.split(paragraph_delim)
+	)
 
 
 def fix_quotes_indent(text):
@@ -72,7 +71,7 @@ def load_text(path):
 	return tuple(text.split('\n', 2)) # (title, author, text)
 
 
-def save_with_template(out_path, template_path, title, author, content):
+def save_latex_with_template(out_path, template_path, title, author, content):
 	with open(template_path) as f:
 		template = f.read()
 
@@ -108,10 +107,10 @@ def main():
 
 	# No furigana
 	no_furigana_fname = os.path.splitext(args.input)[0] + '.tex'
-	save_with_template(no_furigana_fname, args.template, title, author, text)
+	save_latex_with_template(no_furigana_fname, args.template, title, author, text)
 	# With furigana
 	furigana_fname = os.path.splitext(args.input)[0] + '-furigana.tex'
-	save_with_template(furigana_fname, args.template, title, author, furigana_text)
+	save_latex_with_template(furigana_fname, args.template, title, author, furigana_text)
 
 	subprocess.run(['lualatex', no_furigana_fname])
 	subprocess.run(['lualatex', furigana_fname])
