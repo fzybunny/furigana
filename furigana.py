@@ -31,10 +31,7 @@ def add_latex_furigana_word(original, kana):
 		furigana_r = kana_r[kana_idx:match.b]
 		kanji_r = original_r[original_idx:match.a]
 
-		print('O: {}\nF: {}\n, K: {}\n'.format(okurigana_r, furigana_r, kanji_r))
-
 		is_kanji = all('CJK' in unicodedata.name(k) for k in kanji_r)
-		print(is_kanji)
 
 		if kanji_r:
 			if is_kanji:
