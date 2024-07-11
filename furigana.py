@@ -3,7 +3,9 @@
 import argparse
 from difflib import SequenceMatcher
 import os
+import shutil
 import subprocess
+import tempfile
 import unicodedata
 
 import pykakasi
@@ -93,6 +95,20 @@ def save_latex_with_template(out_path, template_path, title, author, content):
 		f.write(template)
 
 
+def compile_latex(src_path):
+	'''Compile a LaTeX source file to a PDF
+	'''
+
+	with tempfile.TemporaryDirectory() as build_dir:
+		shutil.copy(src_path, build_dir)
+		subprocess.run(
+			['lualatex', os.path.basename(src_path)],
+			cwd=build_dir
+		)
+		pdf_name = os.path.splitext(src_path)[0] + '.pdf'
+		shutil.copy('{}/{}'.format(build_dir, pdf_name), os.getcwd())
+
+
 def parse_args():
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
@@ -122,8 +138,8 @@ def main():
 	furigana_fname = os.path.splitext(args.input)[0] + '-furigana.tex'
 	save_latex_with_template(furigana_fname, args.template, title, author, furigana_text)
 
-	subprocess.run(['lualatex', no_furigana_fname])
-	subprocess.run(['lualatex', furigana_fname])
+	compile_latex(no_furigana_fname)
+	compile_latex(furigana_fname)
 
 
 if __name__ == '__main__':
