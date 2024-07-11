@@ -12,7 +12,14 @@ import pykakasi
 def add_latex_furigana_word(original, kana):
 	'''Generate LaTeX to show furigana on a word, given its reading.
 	'''
-	matches = SequenceMatcher(None, original, kana).get_matching_blocks()
+
+	# SequenceMatcher has trouble when both the kanji reading and okurigana use
+	# the same kana. Going in reverse seems to avoid that.
+	reverse = slice(None, None, -1)
+	original_r = original[reverse]
+	kana_r = kana[reverse]
+
+	matches = SequenceMatcher(None, original_r, kana_r).get_matching_blocks()
 
 	original_idx = 0
 	kana_idx = 0
@@ -20,24 +27,30 @@ def add_latex_furigana_word(original, kana):
 	latex = []
 
 	for match in matches:
-		kanji = original[original_idx:match.a]
-		furigana = kana[kana_idx:match.b]
-		okurigana = original[match.a:match.a + match.size]
+		okurigana_r = original_r[match.a:match.a + match.size]
+		furigana_r = kana_r[kana_idx:match.b]
+		kanji_r = original_r[original_idx:match.a]
 
-		is_kanji = all('CJK' in unicodedata.name(k) for k in kanji)
+		print('O: {}\nF: {}\n, K: {}\n'.format(okurigana_r, furigana_r, kanji_r))
 
-		if kanji:
+		is_kanji = all('CJK' in unicodedata.name(k) for k in kanji_r)
+		print(is_kanji)
+
+		if kanji_r:
 			if is_kanji:
-				latex.append('\\ruby{{{}}}{{{}}}'.format(kanji, furigana))
+				latex.append(
+					'\\ruby{{{}}}{{{}}}'.format(kanji_r[reverse], furigana_r[reverse])
+				)
 			else:
-				latex.append(kanji)
-		if okurigana:
-			latex.append(okurigana)
+				latex.append(kanji_r[reverse])
+		if okurigana_r:
+			latex.append(okurigana_r[reverse])
 
 		original_idx = match.a + match.size
 		kana_idx = match.b + match.size
 
-	return ''.join(latex)
+
+	return ''.join(reversed(latex))
 
 
 def add_latex_furigana(text):
