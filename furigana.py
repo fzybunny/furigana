@@ -73,6 +73,11 @@ def fix_quotes_indent(text):
 	'''Make sure that quotes that are in their own paragraph aren't indented
 	'''
 
+	# 〈〉
+	text = text.replace('\n\n〈', '\n\n{\\hackyquoteindent\n〈')
+	text = text.replace('〉\n\n', '〉\n}\n\n')
+
+	# 「」
 	text = text.replace('\n\n「', '\n\n{\\hackyquoteindent\n「')
 	return text.replace('」\n\n', '」\n}\n\n')
 
