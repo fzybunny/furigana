@@ -8,7 +8,9 @@ import subprocess
 import tempfile
 import unicodedata
 
-import pykakasi
+import MeCab
+
+import jaconv
 
 
 def add_latex_furigana_word(original, kana):
@@ -52,18 +54,34 @@ def add_latex_furigana_word(original, kana):
 	return ''.join(reversed(latex))
 
 
+def mecab_convert(mecab, text):
+	'''Get kanji readings in the same format as kakasi.
+	'''
+
+	words = []
+
+	for word in mecab.parse(text).split('\n'):
+		if word == 'EOS':
+			break
+		orig, kata, _, _, _, _ = tuple(word.split('\t'))
+		words.append({'orig': orig, 'hira': jaconv.kata2hira(kata)})
+
+	return words
+
+
 def add_latex_furigana(text):
 	'''Add furigana to every kanji in a string.
-	'''
-	kks = pykakasi.kakasi()
 
-	# kakasi has a bug with control characters, so we separate the input text into
-	# paragraphs without newlines and process them individually
+		Paragraphs are separated by '\n\n', and may span multiple lines
+	'''
+
+	m = MeCab.Tagger('-O chasen')
+
 	paragraph_delim = '\n\n'
 	return paragraph_delim.join(
 		''.join(
 			add_latex_furigana_word(word['orig'], word['hira'])
-			for word in kks.convert(paragraph.replace('\n', ''))
+			for word in mecab_convert(m, paragraph.replace('\n', ''))
 		)
 		for paragraph in text.split(paragraph_delim)
 	)
